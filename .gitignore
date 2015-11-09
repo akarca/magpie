@@ -44,6 +44,8 @@ coverage.xml
 .mr.developer.cfg
 .project
 .pydevproject
+.vfenv
+repo
 
 # Rope
 .ropeproject
