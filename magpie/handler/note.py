@@ -2,7 +2,6 @@ from base64 import b64encode, b64decode
 from os.path import exists, join
 from re import search
 
-from magic import Magic
 from markdown2 import markdown
 from sh import ErrorReturnCode_1
 from tornado.web import authenticated
@@ -147,29 +146,33 @@ class NoteHandler(BaseHandler):
             path = join(self.settings.repo, notebook_name, note_name)
             dot_path = join(self.settings.repo, notebook_name, '.' + note_name)
             highlight = self.get_argument('hl', None)
-            with Magic() as m:
 
-                # Open the file since m.id_filename() does not accept utf8
-                # paths, not even when using path.decode('utf8')
-                with open(path) as f:
-                    mime = m.id_buffer(f.read())
-                    if 'text' in mime or 'empty' in mime:
-                        self._view_plaintext(notebook_name=notebook_name,
-                                             note_name=note_name,
-                                             highlight=highlight)
-                    elif exists(dot_path):
-                        download = self.get_argument('dl', False)
-                        if download:
-                            self._view_file(notebook_name=notebook_name,
-                                            note_name=note_name)
-                        else:
-                            self._view_plaintext(notebook_name=notebook_name,
-                                                 note_name=note_name,
-                                                 highlight=highlight, dot=True)
+            self._view_plaintext(notebook_name=notebook_name,
+                                 note_name=note_name,
+                                 highlight=highlight)
+            # with Magic() as m:
 
-                    else:
-                        self._view_file(notebook_name=notebook_name,
-                                        note_name=note_name)
+            #     # Open the file since m.id_filename() does not accept utf8
+            #     # paths, not even when using path.decode('utf8')
+            #     with open(path) as f:
+            #         mime = m.id_buffer(f.read())
+            #         if 'text' in mime or 'empty' in mime:
+            #             self._view_plaintext(notebook_name=notebook_name,
+            #                                  note_name=note_name,
+            #                                  highlight=highlight)
+            #         elif exists(dot_path):
+            #             download = self.get_argument('dl', False)
+            #             if download:
+            #                 self._view_file(notebook_name=notebook_name,
+            #                                 note_name=note_name)
+            #             else:
+            #                 self._view_plaintext(notebook_name=notebook_name,
+            #                                      note_name=note_name,
+            #                                      highlight=highlight, dot=True)
+
+            #         else:
+            #             self._view_file(notebook_name=notebook_name,
+            #                             note_name=note_name)
 
     @authenticated
     def post(self, notebook_name, note_name):
