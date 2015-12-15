@@ -10,7 +10,9 @@ from tornado.escape import url_escape
 
 from base import BaseHandler
 
+
 class NoteHandler(BaseHandler):
+
     def _star(self, notebook_name, note_name, star, redir=True):
         starred = self.get_starred()
         full_name = u'%s/%s' % (notebook_name, note_name)
@@ -52,7 +54,7 @@ class NoteHandler(BaseHandler):
             note_contents = open(path).read()
             self.render('note.html', notebook_name=notebook_name,
                         note_name=note_name, note_contents=note_contents,
-                        edit=True, autosave=self.settings['autosave'], 
+                        edit=True, autosave=self.settings['autosave'],
                         wysiwyg=self.settings['wysiwyg'])
         else:
             if toggle > -1:
@@ -70,7 +72,7 @@ class NoteHandler(BaseHandler):
                             else:
                                 new = '[x]'
                             line = "%s%s %s\n" % \
-                            (regex.group(1), new, regex.group(3))
+                                (regex.group(1), new, regex.group(3))
                         index = index + 1
                     tmp.append(line)
                 f.close()
@@ -87,6 +89,7 @@ class NoteHandler(BaseHandler):
                 else:
                     message = 'updating %s' % path
                 self.application.git.commit('-m', message)
+                self.application.git.push(' origin master')
             except ErrorReturnCode_1 as e:
                 if 'nothing to commit' not in e.message:
                     raise
@@ -111,7 +114,7 @@ class NoteHandler(BaseHandler):
     def _view_file(self, notebook_name, note_name):
         path = join(self.settings.repo, notebook_name, note_name)
         with open(path, 'rb') as f:
-            self.set_header("Content-Disposition", "attachment; filename=%s" % \
+            self.set_header("Content-Disposition", "attachment; filename=%s" %
                             note_name)
             self.write(f.read())
 
