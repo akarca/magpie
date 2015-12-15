@@ -2,7 +2,6 @@ from base64 import b64encode, b64decode
 from os.path import exists, join
 from re import search
 
-from magic import Magic
 from markdown2 import markdown
 from sh import ErrorReturnCode_1
 from tornado.web import authenticated
@@ -45,16 +44,20 @@ class NoteHandler(BaseHandler):
                         note_name=note_name)
 
     def _edit(self, notebook_name, note_name, note_contents=None,
-              confirmed=False, toggle=-1):
+              confirmed=False, toggle=-1, note_name_rename=None):
 
         notebook_enc = self.encode_name(notebook_name)
         note_enc = self.encode_name(note_name)
         path = join(self.settings.repo, notebook_enc, note_enc)
+        if note_name_rename:
+            rename_note_enc = self.encode_name(note_name_rename)
+            rename_path = join(self.settings.repo, notebook_enc, rename_note_enc)
         if not confirmed:
             note_contents = open(path).read()
             self.render('note.html', notebook_name=notebook_name,
                         note_name=note_name, note_contents=note_contents,
                         edit=True, autosave=self.settings['autosave'],
+                        autosave_interval=self.settings['autosave_interval'],
                         wysiwyg=self.settings['wysiwyg'])
         else:
             if toggle > -1:
@@ -89,10 +92,17 @@ class NoteHandler(BaseHandler):
                 else:
                     message = 'updating %s' % path
                 self.application.git.commit('-m', message)
-                self.application.git.push(' origin master')
+                self.application.git.push('origin', 'master')
             except ErrorReturnCode_1 as e:
                 if 'nothing to commit' not in e.message:
                     raise
+            if note_name_rename and note_name_rename != note_name:
+                # rename note
+                message = 'moving %s to %s' % (path, rename_path)
+                # TODO: don't force; do something more graceful
+                self.application.git.mv('-f', path, rename_path)
+                self.application.git.commit('-m', message)
+                note_enc = rename_note_enc
             self.redirect(note_enc.replace('#', '%23'))
 
     def _view_plaintext(self, notebook_name, note_name, highlight=None,
@@ -136,29 +146,33 @@ class NoteHandler(BaseHandler):
             path = join(self.settings.repo, notebook_name, note_name)
             dot_path = join(self.settings.repo, notebook_name, '.' + note_name)
             highlight = self.get_argument('hl', None)
-            with Magic() as m:
 
-                # Open the file since m.id_filename() does not accept utf8
-                # paths, not even when using path.decode('utf8')
-                with open(path) as f:
-                    mime = m.id_buffer(f.read())
-                    if 'text' in mime or 'empty' in mime:
-                        self._view_plaintext(notebook_name=notebook_name,
-                                             note_name=note_name,
-                                             highlight=highlight)
-                    elif exists(dot_path):
-                        download = self.get_argument('dl', False)
-                        if download:
-                            self._view_file(notebook_name=notebook_name,
-                                            note_name=note_name)
-                        else:
-                            self._view_plaintext(notebook_name=notebook_name,
-                                                 note_name=note_name,
-                                                 highlight=highlight, dot=True)
+            self._view_plaintext(notebook_name=notebook_name,
+                                 note_name=note_name,
+                                 highlight=highlight)
+            # with Magic() as m:
 
-                    else:
-                        self._view_file(notebook_name=notebook_name,
-                                        note_name=note_name)
+            #     # Open the file since m.id_filename() does not accept utf8
+            #     # paths, not even when using path.decode('utf8')
+            #     with open(path) as f:
+            #         mime = m.id_buffer(f.read())
+            #         if 'text' in mime or 'empty' in mime:
+            #             self._view_plaintext(notebook_name=notebook_name,
+            #                                  note_name=note_name,
+            #                                  highlight=highlight)
+            #         elif exists(dot_path):
+            #             download = self.get_argument('dl', False)
+            #             if download:
+            #                 self._view_file(notebook_name=notebook_name,
+            #                                 note_name=note_name)
+            #             else:
+            #                 self._view_plaintext(notebook_name=notebook_name,
+            #                                      note_name=note_name,
+            #                                      highlight=highlight, dot=True)
+
+            #         else:
+            #             self._view_file(notebook_name=notebook_name,
+            #                             note_name=note_name)
 
     @authenticated
     def post(self, notebook_name, note_name):
@@ -169,8 +183,9 @@ class NoteHandler(BaseHandler):
         if bool(self.get_argument('save', False)):
             note = self.get_argument('note')
             toggle = self.get_argument('toggle', -1)
+            note_name_rename = self.get_argument('note_name_rename', None)
             self._edit(notebook_name=notebook_name, note_name=note_name,
-                       note_contents=note, confirmed=True, toggle=toggle)
+                       note_contents=note, confirmed=True, toggle=toggle, note_name_rename=note_name_rename)
         elif bool(self.get_argument('delete', False)):
             self._delete(notebook_name, note_name, confirmed=True)
         else:

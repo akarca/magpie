@@ -30,6 +30,20 @@
         $("#savefail").removeClass("hidden");
       });
     }
+    var dirty = false;
+    function setDirty(val) {
+      if (dirty != val) {
+        // on change
+        dirty = val;
+        if (dirty) {
+          // on dirty
+          document.title = "*" + document.title
+        } else {
+          // on clean
+          document.title = document.title.substr(1)
+        }
+      }
+    }
   </script>
 {% end block %}
 
@@ -47,6 +61,9 @@ onload="checkbox_replace(document.getElementById('rendered_note'))";
     <br>
     <button class="btn btn-primary visible-xs" onclick="$('.row-offcanvas').toggleClass('active');">Notes</button>
     <form method=POST>
+    <input type="text" name="note_name_rename" value="{{ note_name }}" >
+    <br>
+    <br>
     <input type=submit class="btn btn-success" value=Save name=save>
     <input type=submit class="btn btn-danger" value=Cancel name=cancel>
     <br>
@@ -60,20 +77,25 @@ onload="checkbox_replace(document.getElementById('rendered_note'))";
 
       </div>
     {% end if %}
-    <textarea cols=100 rows=25 name=note tabindex=1{% if wysiwyg %} class="hidden"{% end if %}>{{ note_contents }}</textarea>
-    {% if autosave %}
+    <textarea cols=100 rows=25 name=note tabindex=1{% if wysiwyg %} class="hidden"{% end if %} oninput="setDirty(true);">{{ note_contents }}</textarea>
+    {% if autosave and autosave_interval and autosave_interval > 0 %}
         <script>
           var autosave = function(){
-            $.ajax({
-               url:  "{{ url_escape(note_name) }}?a=edit"
-              ,type: "POST"
-              ,data: {
-                 save: "Save"
-                ,note: $("textarea").val()
-              }
-            });
+            if (dirty) {
+              $.ajax({
+                 url:  "{{ url_escape(note_name) }}?a=edit"
+                ,type: "POST"
+                ,data: {
+                   save: "Save"
+                  ,note: $("textarea").val()
+                }
+                ,success: function(data, textStatus, jqXHR) {
+                   setDirty(false);
+                }
+              });
+            }
           };
-          setInterval(autosave, 5000);
+          setInterval(autosave, {{ autosave_interval * 1000 }});
         </script>
     {% end if %}
   {% else %}

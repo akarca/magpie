@@ -74,7 +74,7 @@
         {% end for %}
 
         <li>
-          <button class="btn btn-md btn-primary" data-toggle="modal" data-target="#newnotebook"> 
+          <button class="btn btn-md btn-primary" data-toggle="modal" data-target="#newnotebook">
             New Notebook+
           </button>
         </li>
@@ -86,7 +86,7 @@
         <div class="col-xs-6 col-sm-3 sidebar-offcanvas" role="navigation">
           <div class="well sidebar-nav">
             <ul class="nav">
-              <li><h3>Notes</h3></li>        
+              <li><h3>Notes</h3></li>
               <li>
                 <button class="btn btn-primary" data-toggle="modal" data-target="#newnote">
                   New Note+
@@ -132,7 +132,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-            <input onclick="new_note(this);" type="button" class="btn btn-primary" value="Create" /> 
+            <input onclick="new_note(this);" type="button" class="btn btn-primary" value="Create" />
           </div>
         </div>
       </div>
@@ -152,16 +152,16 @@
             </div>
             <div class="modal-footer">
               <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-              <input onclick="new_notebook(this);" type="button" class="btn btn-primary" value="Create" /> 
+              <input onclick="new_notebook(this);" type="button" class="btn btn-primary" value="Create" />
             </div>
           </div>
         </div>
       </div>
     </div>
 
- 
 
-    <script src="{{ static_url('js/hallo/lib/jquery/jquery.min.js') }}"></script>
+
+    <script src="{{ static_url('js/jquery.min.js') }}"></script>
     <script src="{{ static_url('js/touchswipe/jquery.touchSwipe.min.js') }}"></script>
     <script src="//netdna.bootstrapcdn.com/bootstrap/3.1.1/js/bootstrap.min.js"></script>
 {% try %}
